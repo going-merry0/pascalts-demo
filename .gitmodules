@@ -1,0 +1,3 @@
+[submodule "Pascalts"]
+	path = Pascalts
+	url = git@github.com:hsiaosiyuan0/Pascalts.git

@@ -1,0 +1,12 @@
+{
+  "name": "pascalts-demo",
+  "version": "0.0.1",
+  "description": "Demo for pascalts",
+  "main": "index.js",
+  "repository": "https://github.com/hsiaosiyuan0/pascalts-demo",
+  "author": "hsiaosiyuan0",
+  "license": "MIT",
+  "dependencies": {
+    "monaco-editor": "0.8.3"
+  }
+}

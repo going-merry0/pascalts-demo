@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Pascalts</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+    <header><span>Pascalts</span></header>
+    <div class="row">
+      <div class="col-3">
+        <div class="form-group">
+          <label for="samples" class="col-form-label">Samples:</label>
+          <select id="samples" class="form-control form-control-sm">
+            <option value="hello">hello</option>
+            <option value="recursive">recursive</option>
+            <option value="factorials">factorials</option>
+            <option value="newton">newton</option>
+            <option value="hanoi">hanoi</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-3">
+        <div class="form-group" style="text-align: right;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-run">Run</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div id="editor-container"></div>
+      </div>
+      <div class="col">
+        <div class="col">
+          <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#output" role="tab">Code</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#ast" role="tab">AST</a>
+            </li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane active" id="output" role="tabpanel">
+            </div>
+            <div class="tab-pane" id="ast" role="tabpanel">...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//cdn.bootcss.com/tether/1.4.0/js/tether.min.js"></script>
+    <script src="//cdn.bootcss.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"></script>
+    <script src="//cdn.bootcss.com/require.js/2.3.3/require.min.js"></script>
+    <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="hrtime.js"></script>
+    <script src="Pascalts/dist/pascalts.js"></script>
+    <script src="samples.js"></script>
+    <script src="index.js"></script>
+    <script>
+      require.config({
+        paths: {
+          'eventsBrowser': '//cdn.bootcss.com/eventemitter3/2.0.3/index.min'
+        }
+      })
+
+      define('events', ['eventsBrowser'], function () {
+        return {
+          EventEmitter
+        }
+      })
+
+      require([
+        "frontend/parser",
+        "frontend/source",
+        "frontend/scanner"
+      ], function (parser, source, scanner) {
+
+        const srcCode =
+          `PROGRAM hello (output);
+
+{Write 'Hello, world.' ten times.}
+
+VAR
+    i : integer;
+
+BEGIN {hello}
+    FOR i := 1 TO 10 DO Begin
+        writeln('Hello, world.');
+    END;
+END {hello}.
+`
+
+        // monaco seems use the global process to detect it's runtime environment is nodejs or browser
+        // so we need to unset process after we done our job
+        window.process = {
+          hrtime: hrtime
+        }
+
+        const src = new source.default(srcCode)
+        const sca = new scanner.default(src)
+        const pp = new parser.Parser(sca)
+
+        pp.on(parser.EventType.PARSER_SUMMARY, (arg) => {
+          const {
+            elapsedTime,
+            errorCount
+          } = arg
+          console.info(errorCount, elapsedTime[0], elapsedTime[1] / 1000000)
+
+          if (errorCount === 0) {
+            console.log('ok')
+            console.dir(pp.code)
+            console.dir(pp.symtabStack)
+          }
+
+          window.process = undefined
+        })
+
+        pp.parse()
+      });
+
+    </script>
+</body>
+
+</html>

@@ -4,12 +4,12 @@
   'use strict'
 
   // polyfil for window.performance.now
-  var performance = {}
-  var performanceNow = performance.now ||
-  performance.mozNow ||
-  performance.msNow ||
-  performance.oNow ||
-  performance.webkitNow ||
+  var performance = window.performance
+  var performanceNow = window.performance.now ||
+  window.performance.mozNow ||
+  window.performance.msNow ||
+  window.performance.oNow ||
+  window.performance.webkitNow ||
   function() {
     return (new Date()).getTime()
   }

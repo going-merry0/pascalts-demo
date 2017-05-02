@@ -4,7 +4,8 @@
   require.config({
     paths: {
       'eventsBrowser': '//cdn.bootcss.com/eventemitter3/2.0.3/index.min',
-      'vs': 'node_modules/monaco-editor/min/vs'
+      'vs': 'node_modules/monaco-editor/min/vs',
+      'astPrinter': 'ast-printer'
     }
   })
 
@@ -86,7 +87,9 @@
     'frontend/source',
     'frontend/scanner',
     'backend/interpreter',
-  ], function(_, parser, source, scanner, interpreter) {
+    'astPrinter',
+    'intermediate/symtab'
+  ], function(_, parser, source, scanner, interpreter, astPrinter, symtab) {
     const editor = monaco.editor.create(document.getElementById('editor-container'))
     const langId = 'pascal'
     monaco.languages.register({
@@ -104,9 +107,11 @@
     window.samples.showDefault()
 
     const output = $('#output>pre')
+    const astOutput = $('#ast>pre')
 
     $('#btn-run').click(() => {
       output.html('')
+      astOutput.html('')
       syntaxErrorCount = 0
 
       const srcCode = model.getValue()
@@ -136,6 +141,9 @@
         console.info(errorCount, elapsedTime[0], elapsedTime[1] / 1000000)
 
         syntaxErrorCount = errorCount
+
+        const code = pp.symtabStack.programId.get(symtab.SymtabEntryKey.ROUTINE_ICODE)
+        astOutput.html(astPrinter.print(code))
 
         exe.on(interpreter.EventType.INTERPRETER_SUMMARY, (arg) => {
           output.html(window.process.stdout.buf)

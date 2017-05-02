@@ -32,3 +32,14 @@ html {
   margin-bottom: calc(.5rem - 1px * 2);
   font-size: 1.2rem;
 }
+
+#results {
+  height: 468px;
+  border: 1px solid #ddd;
+  border-top: 0;
+  overflow: auto;
+}
+
+#results pre {
+  padding: 10px;
+}

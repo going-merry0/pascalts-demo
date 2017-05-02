@@ -1,9 +1,16 @@
 (function() {
   'use strict'
 
-  requirejs.config({
+  require.config({
     paths: {
+      'eventsBrowser': '//cdn.bootcss.com/eventemitter3/2.0.3/index.min',
       'vs': 'node_modules/monaco-editor/min/vs'
+    }
+  })
+
+  define('events', ['eventsBrowser'], function() {
+    return {
+      EventEmitter
     }
   })
 
@@ -73,18 +80,74 @@
     },
   }
 
-  require(['vs/editor/editor.main'], function() {
+  require([
+    'vs/editor/editor.main',
+    'frontend/parser',
+    'frontend/source',
+    'frontend/scanner',
+    'backend/interpreter',
+  ], function(_, parser, source, scanner, interpreter) {
     const editor = monaco.editor.create(document.getElementById('editor-container'))
     const langId = 'pascal'
     monaco.languages.register({
       id: langId
     })
     monaco.languages.setMonarchTokensProvider(langId, PASCAL_DEF)
+
+    let model = null
     window.samples.onchange = (src) => {
-      const model = monaco.editor.createModel(src, langId)
+      model = monaco.editor.createModel(src, langId)
       editor.setModel(model)
     }
 
+    let syntaxErrorCount = 0
     window.samples.showDefault()
+
+    const output = $('#output>pre')
+
+    $('#btn-run').click(() => {
+      output.html('')
+      syntaxErrorCount = 0
+
+      const srcCode = model.getValue()
+
+      // monaco seems use the global process to detect it's runtime environment 
+      // is whether nodejs or browser so we need to unset the mock process after we done our job
+      window.process = {
+        hrtime: hrtime,
+        stdout: {
+          write: function(text) {
+            this.buf += text
+          },
+          buf: ''
+        },
+        exit: (code) => {
+          console.log(`process exited with code: ${code}`)
+        }
+      }
+
+      const src = new source.default(srcCode)
+      const sca = new scanner.default(src)
+      const pp = new parser.Parser(sca)
+      const exe = new interpreter.Executor()
+
+      pp.on(parser.EventType.PARSER_SUMMARY, (arg) => {
+        const {elapsedTime, errorCount} = arg
+        console.info(errorCount, elapsedTime[0], elapsedTime[1] / 1000000)
+
+        syntaxErrorCount = errorCount
+
+        exe.on(interpreter.EventType.INTERPRETER_SUMMARY, (arg) => {
+          output.html(window.process.stdout.buf)
+        })
+
+        exe.process(pp.code, pp.symtabStack)
+
+        // unset mock process
+        window.process = undefined
+      })
+
+      pp.parse()
+    })
   })
 })()

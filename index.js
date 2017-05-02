@@ -4,7 +4,7 @@
   require.config({
     paths: {
       'eventsBrowser': '//cdn.bootcss.com/eventemitter3/2.0.3/index.min',
-      'vs': 'node_modules/monaco-editor/min/vs',
+      'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs',
       'astPrinter': 'ast-printer'
     }
   })
